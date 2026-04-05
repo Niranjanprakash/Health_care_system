@@ -2,13 +2,8 @@ import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import Chatbot from '../components/Chatbot';
 import Toast, { useToast } from '../components/Toast';
+import { apiGet, apiPost, clearToken } from '../api';
 import './Dashboard.css';
-
-const api = (url, body) => fetch(url, {
-  method: 'POST', credentials: 'include',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(body),
-}).then(r => r.json());
 
 export default function StudentDashboard({ setAuth }) {
   const today = new Date().toISOString().split('T')[0];
@@ -19,17 +14,18 @@ export default function StudentDashboard({ setAuth }) {
   const [loadingBtn, setLoadingBtn] = useState('');
   const { toasts, add: addToast, remove } = useToast();
 
-  const loadApts = () => fetch('/api/appointments', { credentials: 'include' }).then(r => r.json()).then(setAppointments);
+  const loadApts = () => apiGet('/api/appointments').then(setAppointments);
   useEffect(() => { loadApts(); }, []);
 
   const logout = async () => {
-    await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+    await apiPost('/api/logout', {});
+    clearToken();
     setAuth({ user: null, role: null });
   };
 
   const bookAppointment = async (e) => {
     e.preventDefault(); setLoadingBtn('apt');
-    const r = await api('/api/book-appointment', aptForm);
+    const r = await apiPost('/api/book-appointment', aptForm);
     setLoadingBtn('');
     addToast(r.message, r.success ? 'success' : 'error');
     if (r.success) { setAptForm({ date: '', time: '', reason: '' }); loadApts(); }
@@ -37,7 +33,7 @@ export default function StudentDashboard({ setAuth }) {
 
   const bookPsych = async (e) => {
     e.preventDefault(); setLoadingBtn('psych');
-    const r = await api('/api/book-psychiatrist', psychForm);
+    const r = await apiPost('/api/book-psychiatrist', psychForm);
     setLoadingBtn('');
     addToast(r.message, r.success ? 'success' : 'error');
     if (r.success) setPsychForm({ date: '', time: '' });
@@ -47,7 +43,7 @@ export default function StudentDashboard({ setAuth }) {
     e.preventDefault();
     if (pwdForm.new_password !== pwdForm.confirm_password) { addToast('Passwords do not match!', 'error'); return; }
     setLoadingBtn('pwd');
-    const r = await api('/api/change-password', pwdForm);
+    const r = await apiPost('/api/change-password', pwdForm);
     setLoadingBtn('');
     addToast(r.message, r.success ? 'success' : 'error');
     if (r.success) setPwdForm({ current_password: '', new_password: '', confirm_password: '' });
@@ -71,12 +67,11 @@ export default function StudentDashboard({ setAuth }) {
       <Header title="👨🎓 Student Dashboard — Health Care Medical College" onLogout={logout} />
       <div className="dashboard">
 
-        {/* Mini Stats */}
         <div className="analytics-grid" style={{ marginBottom: '20px' }}>
           {[
-            { label: 'My Appointments', val: stats.total, icon: '📋', bg: 'linear-gradient(135deg,#667eea,#764ba2)' },
-            { label: 'Approved', val: stats.approved, icon: '✅', bg: 'linear-gradient(135deg,#48bb78,#38a169)' },
-            { label: 'Pending', val: stats.pending, icon: '⏳', bg: 'linear-gradient(135deg,#ed8936,#dd6b20)' },
+            { label: 'My Appointments', val: stats.total,    icon: '📋', bg: 'linear-gradient(135deg,#667eea,#764ba2)' },
+            { label: 'Approved',        val: stats.approved, icon: '✅', bg: 'linear-gradient(135deg,#48bb78,#38a169)' },
+            { label: 'Pending',         val: stats.pending,  icon: '⏳', bg: 'linear-gradient(135deg,#ed8936,#dd6b20)' },
           ].map((c, i) => (
             <div key={c.label} className="analytics-card" style={{ background: c.bg, animationDelay: `${i * 0.1}s` }}>
               <div className="card-icon">{c.icon}</div>
@@ -139,10 +134,7 @@ export default function StudentDashboard({ setAuth }) {
                 <tbody>
                   {appointments.map((apt, i) => (
                     <tr key={apt.id}>
-                      <td>{i + 1}</td>
-                      <td>{apt.date}</td>
-                      <td>{apt.time}:00</td>
-                      <td>{apt.reason}</td>
+                      <td>{i + 1}</td><td>{apt.date}</td><td>{apt.time}:00</td><td>{apt.reason}</td>
                       <td><span className={`status-badge status-${apt.status.toLowerCase()}`}>{apt.status}</span></td>
                     </tr>
                   ))}

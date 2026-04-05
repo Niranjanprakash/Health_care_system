@@ -2,13 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import Header from '../components/Header';
 import Modal from '../components/Modal';
 import Toast, { useToast } from '../components/Toast';
+import { apiGet, apiPost, clearToken, getToken } from '../api';
 import './Dashboard.css';
-
-const api = (url, body) => fetch(url, {
-  method: 'POST', credentials: 'include',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(body),
-}).then(r => r.json());
 
 function AnimatedNumber({ value }) {
   const [display, setDisplay] = useState(0);
@@ -40,26 +35,26 @@ export default function AdminDashboard({ setAuth }) {
   const closeModal = (k) => setModals(m => ({ ...m, [k]: false }));
 
   const load = useCallback(() => {
-    fetch('/api/admin/dashboard', { credentials: 'include' })
-      .then(r => r.json()).then(setData);
+    apiGet('/api/admin/dashboard').then(setData);
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
   const logout = async () => {
-    await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+    await apiPost('/api/logout', {});
+    clearToken();
     setAuth({ user: null, role: null });
   };
 
   const manageApt = async (apt_id, action, type = 'regular') => {
-    await api('/api/manage-appointment', { apt_id, action, type });
-    addToast(`Appointment ${action === 'approve' ? 'approved' : 'rejected'} successfully!`, action === 'approve' ? 'success' : 'error');
+    await apiPost('/api/manage-appointment', { apt_id, action, type });
+    addToast(`Appointment ${action === 'approve' ? 'approved' : 'rejected'}!`, action === 'approve' ? 'success' : 'error');
     load();
   };
 
   const createStudent = async (e) => {
     e.preventDefault(); setLoadingBtn('student');
-    const r = await api('/api/create-student', studentForm);
+    const r = await apiPost('/api/create-student', studentForm);
     setLoadingBtn('');
     addToast(r.message, r.success ? 'success' : 'error');
     if (r.success) { setStudentForm({ sid: '', password: '', email: '' }); setTimeout(() => { closeModal('student'); load(); }, 1200); }
@@ -67,7 +62,7 @@ export default function AdminDashboard({ setAuth }) {
 
   const addExpense = async (e) => {
     e.preventDefault(); setLoadingBtn('expense');
-    const r = await api('/api/add-expense', expenseForm);
+    const r = await apiPost('/api/add-expense', expenseForm);
     setLoadingBtn('');
     addToast(r.message, r.success ? 'success' : 'error');
     if (r.success) { setExpenseForm({ month: '', tablet: '', lab: '', doctor: '' }); setTimeout(() => closeModal('expense'), 1200); }
@@ -75,7 +70,7 @@ export default function AdminDashboard({ setAuth }) {
 
   const updateEmail = async (e) => {
     e.preventDefault(); setLoadingBtn('email');
-    const r = await api('/api/update-student-email', emailForm);
+    const r = await apiPost('/api/update-student-email', emailForm);
     setLoadingBtn('');
     addToast(r.message, r.success ? 'success' : 'error');
     if (r.success) { setTimeout(() => { closeModal('email'); load(); }, 1200); }
@@ -83,9 +78,15 @@ export default function AdminDashboard({ setAuth }) {
 
   const deleteStudent = async (sid) => {
     if (!window.confirm(`Delete student ${sid}? This cannot be undone.`)) return;
-    const r = await api('/api/delete-student', { student_id: sid });
+    const r = await apiPost('/api/delete-student', { student_id: sid });
     addToast(r.message, r.success ? 'success' : 'error');
     load();
+  };
+
+  const downloadCSV = () => {
+    const base = process.env.REACT_APP_API_URL || '';
+    const token = getToken();
+    window.open(`${base}/api/download-expense-csv?token=${token}`, '_blank');
   };
 
   const total = Number(expenseForm.tablet || 0) + Number(expenseForm.lab || 0) + Number(expenseForm.doctor || 0);
@@ -201,8 +202,7 @@ export default function AdminDashboard({ setAuth }) {
                   {students.map(s => (
                     <tr key={s.id}>
                       <td><span className="id-badge">{s.id}</span></td>
-                      <td>{s.email || '—'}</td>
-                      <td>{s.created_at || 'N/A'}</td>
+                      <td>{s.email || '—'}</td><td>{s.created_at || 'N/A'}</td>
                       <td>
                         <button className="btn-edit" onClick={() => { setEmailForm({ student_id: s.id, email: s.email || '' }); openModal('email'); }}>✏️ Email</button>
                         <button className="btn-reject" onClick={() => deleteStudent(s.id)}>🗑️ Delete</button>
@@ -217,7 +217,7 @@ export default function AdminDashboard({ setAuth }) {
 
         <div className="card card-anim">
           <h3>📥 Download Reports</h3>
-          <a href="/api/download-expense-csv" className="btn btn-green">📊 Download Expense Report (CSV)</a>
+          <button className="btn btn-green" onClick={downloadCSV}>📊 Download Expense Report (CSV)</button>
         </div>
 
       </div>

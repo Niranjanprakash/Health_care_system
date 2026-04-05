@@ -3,16 +3,26 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import StudentDashboard from './pages/StudentDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import { getAuth, apiGet } from './api';
 import './index.css';
 
 export default function App() {
-  const [auth, setAuth] = useState(null);
+  const [auth, setAuthState] = useState(null);
 
   useEffect(() => {
-    fetch('/api/me', { credentials: 'include' })
-      .then(r => r.json())
-      .then(d => setAuth(d));
+    const { token, user, role } = getAuth();
+    if (token && user && role) {
+      // Verify token is still valid
+      apiGet('/api/me').then(d => {
+        if (d.user) setAuthState({ user: d.user, role: d.role });
+        else setAuthState({ user: null, role: null });
+      }).catch(() => setAuthState({ user: null, role: null }));
+    } else {
+      setAuthState({ user: null, role: null });
+    }
   }, []);
+
+  const setAuth = (data) => setAuthState(data);
 
   if (auth === null) return (
     <div className="loading-screen">
@@ -34,6 +44,7 @@ export default function App() {
         <Route path="/admin" element={
           auth.role === 'admin' ? <AdminDashboard setAuth={setAuth} /> : <Navigate to="/" />
         } />
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>
   );

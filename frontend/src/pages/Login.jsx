@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { apiPost, setAuth as storeAuth } from '../api';
 import './Login.css';
 
 function ParticleCanvas() {
@@ -9,21 +10,16 @@ function ParticleCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     const particles = Array.from({ length: 60 }, () => ({
-      x: Math.random() * canvas.width,
-      y: Math.random() * canvas.height,
-      r: Math.random() * 3 + 1,
-      dx: (Math.random() - 0.5) * 0.6,
-      dy: (Math.random() - 0.5) * 0.6,
-      alpha: Math.random() * 0.5 + 0.2,
+      x: Math.random() * canvas.width, y: Math.random() * canvas.height,
+      r: Math.random() * 3 + 1, dx: (Math.random() - 0.5) * 0.6,
+      dy: (Math.random() - 0.5) * 0.6, alpha: Math.random() * 0.5 + 0.2,
     }));
     let raf;
     const draw = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       particles.forEach(p => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${p.alpha})`;
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${p.alpha})`; ctx.fill();
         p.x += p.dx; p.y += p.dy;
         if (p.x < 0 || p.x > canvas.width) p.dx *= -1;
         if (p.y < 0 || p.y > canvas.height) p.dy *= -1;
@@ -46,7 +42,6 @@ export default function Login({ setAuth }) {
   const [loading, setLoading] = useState(false);
   const [title, setTitle] = useState('');
   const [focused, setFocused] = useState('');
-
   const fullTitle = 'Health Care Medical College';
 
   useEffect(() => {
@@ -61,15 +56,14 @@ export default function Login({ setAuth }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true); setError('');
-    const res = await fetch('/api/login', {
-      method: 'POST', credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ uid, password }),
-    });
-    const data = await res.json();
+    const data = await apiPost('/api/login', { uid, password });
     setLoading(false);
-    if (data.success) setAuth({ user: data.user, role: data.role });
-    else setError(data.message);
+    if (data.success) {
+      storeAuth(data.user, data.role, data.token);
+      setAuth({ user: data.user, role: data.role });
+    } else {
+      setError(data.message);
+    }
   };
 
   return (
