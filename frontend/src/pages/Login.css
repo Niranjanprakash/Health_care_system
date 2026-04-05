@@ -110,8 +110,16 @@
   flex: 1; padding: 14px 10px 14px 0;
   border: none; background: transparent;
   font-size: 15px; outline: none; color: #fff;
+  -webkit-text-fill-color: #fff;
+  caret-color: #fff;
 }
-.input-group input::placeholder { color: rgba(255,255,255,0.35); }
+.input-group input::placeholder { color: rgba(255,255,255,0.35); -webkit-text-fill-color: rgba(255,255,255,0.35); }
+.input-group input:-webkit-autofill,
+.input-group input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px rgba(30,20,60,0.95) inset !important;
+  -webkit-text-fill-color: #fff !important;
+  caret-color: #fff;
+}
 .input-check { color: #48bb78; padding-right: 12px; font-size: 16px; font-weight: 700; }
 .pwd-toggle { background: none; border: none; cursor: pointer; padding: 0 12px; font-size: 16px; color: rgba(255,255,255,0.5); transition: color 0.2s; box-shadow: none; margin: 0; }
 .pwd-toggle:hover { color: #fff; transform: none; box-shadow: none; }
