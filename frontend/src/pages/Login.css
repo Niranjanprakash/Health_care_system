@@ -93,9 +93,9 @@
 .input-group {
   position: relative; margin: 10px 30px;
   display: flex; align-items: center;
-  border: 1.5px solid rgba(255,255,255,0.15);
+  border: 1.5px solid rgba(255,255,255,0.35);
   border-radius: 14px;
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.1);
   transition: all 0.35s ease;
   overflow: hidden;
 }
@@ -121,8 +121,14 @@
   caret-color: #fff;
 }
 .input-check { color: #48bb78; padding-right: 12px; font-size: 16px; font-weight: 700; }
-.pwd-toggle { background: none; border: none; cursor: pointer; padding: 0 12px; font-size: 16px; color: rgba(255,255,255,0.5); transition: color 0.2s; box-shadow: none; margin: 0; }
+.pwd-toggle {
+  background: none; border: none; cursor: pointer;
+  padding: 0 14px; display: flex; align-items: center; justify-content: center;
+  color: rgba(255,255,255,0.55); transition: color 0.2s;
+  box-shadow: none; margin: 0; flex-shrink: 0;
+}
 .pwd-toggle:hover { color: #fff; transform: none; box-shadow: none; }
+.pwd-toggle svg { width: 20px; height: 20px; display: block; }
 
 .login-btn {
   width: calc(100% - 60px); margin: 18px 30px 0;
